@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="online.ronshine.blog.mapper.CategoryMapper">
+
+    <resultMap id="BaseResultMap" type="Category">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="slug" property="slug"/>
+        <result column="description" property="description"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM categories ORDER BY id
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM categories WHERE id = #{id}
+    </select>
+
+    <select id="findBySlug" resultMap="BaseResultMap">
+        SELECT * FROM categories WHERE slug = #{slug}
+    </select>
+
+</mapper>

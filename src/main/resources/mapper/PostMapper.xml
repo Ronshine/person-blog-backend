@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="online.ronshine.blog.mapper.PostMapper">
+
+    <resultMap id="BaseResultMap" type="Post">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="slug" property="slug"/>
+        <result column="excerpt" property="excerpt"/>
+        <result column="content" property="content"/>
+        <result column="cover_image" property="coverImage"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="published" property="published"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <association property="category" javaType="Category">
+            <id column="cid" property="id"/>
+            <result column="cname" property="name"/>
+            <result column="cslug" property="slug"/>
+            <result column="cdesc" property="description"/>
+        </association>
+        <collection property="tags" ofType="Tag"
+                    select="online.ronshine.blog.mapper.TagMapper.findByPostId" column="id"/>
+    </resultMap>
+
+    <sql id="selectWithCategory">
+        SELECT p.*, c.id AS cid, c.name AS cname, c.slug AS cslug, c.description AS cdesc
+        FROM posts p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.published = 1
+    </sql>
+
+    <sql id="orderByCreatedAt">
+        ORDER BY p.created_at DESC
+    </sql>
+
+    <select id="findById" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        AND p.id = #{id}
+    </select>
+
+    <select id="findBySlug" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        AND p.slug = #{slug}
+    </select>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        <include refid="orderByCreatedAt"/>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM posts WHERE published = 1
+    </select>
+
+    <select id="findPageByCategorySlug" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        AND c.slug = #{categorySlug}
+        <include refid="orderByCreatedAt"/>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByCategorySlug" resultType="int">
+        SELECT COUNT(*) FROM posts p
+        JOIN categories c ON p.category_id = c.id
+        WHERE p.published = 1 AND c.slug = #{categorySlug}
+    </select>
+
+    <select id="findPageByTagSlug" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        AND p.id IN (
+            SELECT pt.post_id FROM post_tags pt
+            JOIN tags t ON pt.tag_id = t.id
+            WHERE t.slug = #{tagSlug}
+        )
+        <include refid="orderByCreatedAt"/>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByTagSlug" resultType="int">
+        SELECT COUNT(*) FROM posts p
+        JOIN post_tags pt ON p.id = pt.post_id
+        JOIN tags t ON pt.tag_id = t.id
+        WHERE p.published = 1 AND t.slug = #{tagSlug}
+    </select>
+
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        AND (p.title LIKE CONCAT('%', #{keyword}, '%')
+             OR p.excerpt LIKE CONCAT('%', #{keyword}, '%'))
+        <include refid="orderByCreatedAt"/>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByKeyword" resultType="int">
+        SELECT COUNT(*) FROM posts
+        WHERE published = 1
+          AND (title LIKE CONCAT('%', #{keyword}, '%')
+               OR excerpt LIKE CONCAT('%', #{keyword}, '%'))
+    </select>
+
+    <select id="findAllOrderByCreatedAt" resultMap="BaseResultMap">
+        <include refid="selectWithCategory"/>
+        <include refid="orderByCreatedAt"/>
+    </select>
+
+</mapper>
